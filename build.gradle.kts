@@ -213,6 +213,52 @@ tasks.getByName<RemapJarTask>("remapJar") {
 // JAVADOC //
 /////////////
 
+// Switched to a new Javadoc generation
+val aggregateJavadoc by tasks.registering(Javadoc::class) {
+    description = "Aggregated Javadoc for all JackFredLib modules"
+
+    subprojects.forEach { proj ->
+        if (proj.name == "jackfredlib-testmod") return@forEach
+
+        val main = proj.getSourceSet("main")
+        val client = proj.getSourceSet("client")
+
+        source(main.allJava)
+        source(client.allJava)
+    }
+
+    include("red/jackf/jackfredlib/api/**/*.java")
+    include("red/jackf/jackfredlib/client/api/**/*.java")
+
+    val mainCp = getSourceSet("main").compileClasspath
+    val clientCp = getSourceSet("client").compileClasspath
+
+    dependsOn(subprojects.mapNotNull { proj ->
+        if (proj.name == "jackfredlib-testmod") null
+        else proj.tasks.named("jar")
+    })
+
+    val subprojectJars = subprojects
+        .filter { it.name != "jackfredlib-testmod" }
+        .map { proj -> proj.tasks.named<Jar>("jar").flatMap { it.archiveFile } }
+
+    val janksonFiles = project(":jackfredlib-config")
+        .configurations
+        .getByName("compileClasspath")
+        .filter { it.name.contains("jankson", ignoreCase = true) }
+
+    classpath = files(mainCp, clientCp, janksonFiles) + files(subprojectJars)
+
+    (options as StandardJavadocDocletOptions).apply {
+        showFromPublic()
+        tags(
+            "apiNote:a:API Note:",
+            "implNote:a:Implementation Note:"
+        )
+    }
+}
+// Old JavaDoc generation
+/*
 tasks.withType<Javadoc>().configureEach {
     options.showFromPublic()
 
@@ -239,6 +285,7 @@ tasks.withType<Javadoc>().configureEach {
         "implNote:a:Implementation Note:"
     )
 }
+*/
 
 val javadocJarTask = tasks.register<Jar>("javadocJar") {
     dependsOn("javadoc")
