@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.ToastManager;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.metadata.gui.GuiSpriteScaling;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -122,12 +122,7 @@ public class CustomToastImpl implements CustomToast {
         if (progress >= 1f && progressCompleteTime == -1) progressCompleteTime = timeVisible;
 
         // background
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED,
-                format.texture(),
-                0,
-                0,
-                width(),
-                height());
+        graphics.blitSprite(RenderType::guiTextured, format.texture(), 0, 0, width(), height());
         var textX = leftWidth();
 
         // image if present

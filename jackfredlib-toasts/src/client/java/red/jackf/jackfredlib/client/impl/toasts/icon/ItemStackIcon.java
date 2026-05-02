@@ -28,14 +28,11 @@ public class ItemStackIcon implements ToastIcon {
         int scale = 2 * sizeInSlots - 1;
 
         int index = Mth.clamp((int) (toast.getProgress() * this.items.size()), 0, this.items.size() - 1);
-
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(x + INSET, y + INSET);
-        graphics.pose().scale((float) scale, (float) scale);
-
+        graphics.pose().pushPose();
+        graphics.pose().translate(x + INSET, y + INSET, 0);
+        graphics.pose().scale(scale, scale, 1);
         graphics.renderFakeItem(this.items.get(index), 0, 0);
-
-        graphics.pose().popMatrix();
+        graphics.pose().popPose();
     }
 
     @Override
