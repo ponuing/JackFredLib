@@ -213,6 +213,21 @@ tasks.getByName<RemapJarTask>("remapJar") {
 // JAVADOC //
 /////////////
 
+val aggregateJavadocClasspath by configurations.creating
+
+dependencies {
+    add(aggregateJavadocClasspath.name, "blue.endless:jankson:${properties["jankson_version"]}")
+}
+
+allprojects {
+    tasks.withType<Javadoc>().configureEach {
+        (options as StandardJavadocDocletOptions).tags(
+            "apiNote:a:API Note:",
+            "implNote:a:Implementation Note:"
+        )
+    }
+}
+
 // Switched to a new Javadoc generation
 val aggregateJavadoc by tasks.registering(Javadoc::class) {
     description = "Aggregated Javadoc for all JackFredLib modules"
@@ -242,19 +257,10 @@ val aggregateJavadoc by tasks.registering(Javadoc::class) {
         .filter { it.name != "jackfredlib-testmod" }
         .map { proj -> proj.tasks.named<Jar>("jar").flatMap { it.archiveFile } }
 
-    val janksonFiles = project(":jackfredlib-config")
-        .configurations
-        .getByName("compileClasspath")
-        .filter { it.name.contains("jankson", ignoreCase = true) }
-
-    classpath = files(mainCp, clientCp, janksonFiles) + files(subprojectJars)
+    classpath = files(mainCp, clientCp, aggregateJavadocClasspath) + files(subprojectJars)
 
     (options as StandardJavadocDocletOptions).apply {
         showFromPublic()
-        tags(
-            "apiNote:a:API Note:",
-            "implNote:a:Implementation Note:"
-        )
     }
 }
 // Old JavaDoc generation
@@ -288,12 +294,12 @@ tasks.withType<Javadoc>().configureEach {
 */
 
 val javadocJarTask = tasks.register<Jar>("javadocJar") {
-    dependsOn("javadoc")
-    from(tasks.getByName<Javadoc>("javadoc").destinationDir)
+    dependsOn(aggregateJavadoc)
+    from(aggregateJavadoc.get().destinationDir)
     archiveClassifier = "javadoc"
 }
 
-tasks.getByName("build").dependsOn(javadocJarTask)
+tasks.getByName("build").dependsOn(aggregateJavadoc)
 
 ////////////////
 // PUBLISHING //
