@@ -8,11 +8,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import red.jackf.jackfredlib.api.lying.entity.EntityLie;
 import red.jackf.jackfredlib.impl.lying.LieImpl;
 import red.jackf.jackfredlib.impl.lying.LieManager;
+import net.minecraft.world.entity.UpdateInterval;
 //import red.jackf.jackfredlib.impl.lying.compat.imm_ptl.Compatibility;
 //import red.jackf.jackfredlib.impl.lying.compat.imm_ptl.ImmersivePortalsCompat;
 import red.jackf.jackfredlib.impl.lying.faketeams.FakeTeamManager;
@@ -56,7 +58,7 @@ public class EntityLieImpl<E extends Entity> extends LieImpl implements EntityLi
         this.serverEntity = new ServerEntity(
                 (ServerLevel) entity.level(),
                 entity,
-                entity.getType().updateInterval(),
+                getUpdateInterval(entity),
                 entity.getType().trackDeltas(),
                 new ServerEntity.Synchronizer() {
                     public void sendToTracking(Packet<? super ClientGamePacketListener> packet) {
@@ -167,5 +169,15 @@ public class EntityLieImpl<E extends Entity> extends LieImpl implements EntityLi
     public void rightClick(ServerPlayer player, boolean usingSecondaryAction, InteractionHand hand, Vec3 relativeToEntity) {
         if (this.rightClickCallback != null)
             this.rightClickCallback.onRightClick(player, this, usingSecondaryAction, hand, relativeToEntity);
+    }
+
+    private static UpdateInterval getUpdateInterval(Entity entity) {
+        int interval = entity.getType().updateInterval();
+
+        if (interval == EntityType.NO_UPDATE_INTERVAL) {
+            return UpdateInterval.NEVER;
+        }
+
+        return UpdateInterval.periodic(interval);
     }
 }
